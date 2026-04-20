@@ -1,9 +1,10 @@
 /**
  * useOracle hook — handles querying the Gnostic Gospels Oracle
- * Uses RAG: retrieves relevant text chunks, then sends to AI via Forge API
+ * Uses RAG: retrieves relevant text chunks, then sends to AI via tRPC server procedure
  */
 
 import { useState, useCallback, useRef } from 'react';
+import { trpc } from '@/lib/trpc';
 import { loadKnowledgeBase, retrieveRelevantChunks, buildSystemPrompt, KnowledgeChunk } from '@/lib/rag';
 
 export interface Message {
@@ -20,6 +21,8 @@ export function useOracle() {
   const [error, setError] = useState<string | null>(null);
   const [kbLoaded, setKbLoaded] = useState(false);
   const kbRef = useRef<KnowledgeChunk[] | null>(null);
+
+  const oracleMutation = trpc.oracle.ask.useMutation();
 
   const initKnowledgeBase = useCallback(async () => {
     if (kbRef.current) return;
@@ -52,62 +55,33 @@ export function useOracle() {
         setKbLoaded(true);
       }
 
-      // Retrieve relevant chunks
+      // Retrieve relevant chunks via RAG
       const relevantChunks = retrieveRelevantChunks(question, kbRef.current, 5);
-      const sources = Array.from(new Set(relevantChunks.map(c => c.title)));
-      const systemPrompt = buildSystemPrompt(relevantChunks);
+      const sources = Array.from(new Set(relevantChunks.map((c: KnowledgeChunk) => c.title)));
+      const contextText = buildSystemPrompt(relevantChunks);
 
-      // Call Forge API (built-in AI)
-      const forgeBase = import.meta.env.VITE_FRONTEND_FORGE_API_URL || 'https://forge.butterfly-effect.dev';
-      const apiUrl = `${forgeBase}/v1`;
-      const apiKey = import.meta.env.VITE_FRONTEND_FORGE_API_KEY;
-
-      const response = await fetch(`${apiUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: 'claude-3-5-haiku',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            // Include last 3 exchanges for context
-            ...messages.slice(-6).map(m => ({
-              role: m.role === 'user' ? 'user' : 'assistant',
-              content: m.content,
-            })),
-            { role: 'user', content: question },
-          ],
-          max_tokens: 1200,
-          temperature: 0.7,
-        }),
+      // Call server-side oracle via tRPC (uses BUILT_IN_FORGE_API_KEY securely)
+      const result = await oracleMutation.mutateAsync({
+        question: question.trim(),
+        context: contextText,
+        sources,
       });
-
-      if (!response.ok) {
-        const err = await response.text();
-        throw new Error(`Oracle unavailable: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const answer = data.choices?.[0]?.message?.content || 'The Oracle is silent on this matter.';
 
       const oracleMsg: Message = {
         id: `oracle_${Date.now()}`,
         role: 'oracle',
-        content: answer,
-        sources,
+        content: result.answer,
+        sources: result.sources,
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, oracleMsg]);
     } catch (e: any) {
       setError(e.message || 'The Oracle could not be reached. Please try again.');
-      // Remove the user message on error
       setMessages(prev => prev.filter(m => m.id !== userMsg.id));
     } finally {
       setIsLoading(false);
     }
-  }, [messages, isLoading]);
+  }, [messages, isLoading, oracleMutation]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);

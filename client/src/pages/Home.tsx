@@ -61,17 +61,13 @@ export default function Home() {
 
       {/* ── HERO SECTION ── */}
       <header className="relative overflow-hidden" style={{ minHeight: '340px' }}>
-        {/* Background manuscript image */}
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${HERO_BG})` }}
         />
-        {/* Dark overlay */}
         <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, oklch(0.08 0.015 60 / 70%) 0%, oklch(0.10 0.015 60 / 90%) 70%, oklch(0.10 0.015 60) 100%)' }} />
 
-        {/* Header content */}
         <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 py-16">
-          {/* Decorative top rule */}
           <div className="flex items-center gap-4 mb-8 w-full max-w-lg">
             <div className="flex-1 gold-divider" />
             <span style={{ color: 'oklch(0.75 0.12 80)', fontSize: '1.2rem' }}>✦</span>
@@ -90,7 +86,6 @@ export default function Home() {
             Ask of the hidden wisdom. Seek within the ancient codices of Nag Hammadi.
           </p>
 
-          {/* Decorative bottom rule */}
           <div className="flex items-center gap-4 mt-8 w-full max-w-lg">
             <div className="flex-1 gold-divider" />
             <span style={{ color: 'oklch(0.75 0.12 80)', fontSize: '1.2rem' }}>✦</span>
@@ -102,7 +97,7 @@ export default function Home() {
       {/* ── MAIN CONTENT ── */}
       <main className="flex-1 flex flex-col lg:flex-row max-w-7xl mx-auto w-full px-4 lg:px-8 py-8 gap-8">
 
-        {/* ── LEFT SIDEBAR: Sophia image + about ── */}
+        {/* ── LEFT SIDEBAR ── */}
         <aside className="hidden lg:flex flex-col gap-6" style={{ width: '260px', flexShrink: 0 }}>
           <div className="rounded overflow-hidden" style={{ border: '1px solid oklch(0.35 0.06 75 / 40%)' }}>
             <img src={SOPHIA_IMG} alt="Sophia, Goddess of Wisdom" className="w-full object-cover" style={{ maxHeight: '320px', objectPosition: 'top' }} />
@@ -148,7 +143,6 @@ export default function Home() {
             style={{ minHeight: '400px', maxHeight: 'calc(100vh - 480px)' }}
           >
             {messages.length === 0 ? (
-              /* Empty state — suggested questions */
               <div className="flex flex-col items-center py-8">
                 <div
                   className="w-24 h-24 rounded-full mb-6 bg-cover bg-center opacity-60"
@@ -190,7 +184,6 @@ export default function Home() {
                 {messages.map(msg => (
                   <div key={msg.id} className="message-enter">
                     {msg.role === 'user' ? (
-                      /* User message */
                       <div className="flex justify-end">
                         <div
                           className="max-w-xl px-5 py-3 rounded"
@@ -207,7 +200,6 @@ export default function Home() {
                         </div>
                       </div>
                     ) : (
-                      /* Oracle response */
                       <div className="flex gap-4">
                         <div
                           className="w-8 h-8 rounded-full flex-shrink-0 mt-1 bg-cover bg-center"
@@ -256,7 +248,6 @@ export default function Home() {
                   </div>
                 ))}
 
-                {/* Loading indicator */}
                 {isLoading && (
                   <div className="flex gap-4 message-enter">
                     <div

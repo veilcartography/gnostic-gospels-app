@@ -1,0 +1,35 @@
+{
+  "name": "The Gnostic Gospels Oracle",
+  "short_name": "Gnostic Oracle",
+  "description": "Ask any question about the Gnostic Gospels and receive answers drawn from the Nag Hammadi Library — 12 ancient texts, 352 passages.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1408",
+  "theme_color": "#1a1408",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["education", "books", "lifestyle"],
+  "icons": [
+    {
+      "src": "/manus-storage/gnostic_icon_192_b014e597.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/manus-storage/gnostic_icon_maskable_4bcbc7cc.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/manus-storage/gnostic_icon_512_145fd116.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
+}

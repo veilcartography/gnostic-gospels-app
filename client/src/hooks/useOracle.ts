@@ -58,7 +58,8 @@ export function useOracle() {
       const systemPrompt = buildSystemPrompt(relevantChunks);
 
       // Call Forge API (built-in AI)
-      const apiUrl = import.meta.env.VITE_FRONTEND_FORGE_API_URL;
+      const forgeBase = import.meta.env.VITE_FRONTEND_FORGE_API_URL || 'https://forge.butterfly-effect.dev';
+      const apiUrl = `${forgeBase}/v1`;
       const apiKey = import.meta.env.VITE_FRONTEND_FORGE_API_KEY;
 
       const response = await fetch(`${apiUrl}/chat/completions`, {

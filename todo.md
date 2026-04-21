@@ -17,3 +17,6 @@
 - [x] Add 3 free question counter with subscribe modal/paywall
 - [x] Build Courses teaser page with structured learning paths
 - [x] Add social share button with pre-written YouTube/Instagram copy
+- [x] Download course content from Google Drive
+- [x] Build real course lesson pages from Drive content
+- [x] Wire lesson pages to subscriber-only access

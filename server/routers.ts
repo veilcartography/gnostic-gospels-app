@@ -3,6 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { invokeLLM } from "./_core/llm";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
+import { stripeRouter } from "./stripeRouter";
 import { z } from "zod";
 
 export const appRouter = router({
@@ -15,6 +16,8 @@ export const appRouter = router({
       return { success: true } as const;
     }),
   }),
+
+  stripe: stripeRouter,
 
   oracle: router({
     ask: publicProcedure

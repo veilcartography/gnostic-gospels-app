@@ -31,6 +31,54 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+
+  // Stripe webhook MUST use raw body — register BEFORE express.json()
+  app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async (req, res) => {
+    const sig = req.headers["stripe-signature"];
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!sig || !webhookSecret) {
+      res.status(400).send("Missing signature or webhook secret");
+      return;
+    }
+    let event: import("stripe").Stripe.Event;
+    try {
+      const { default: Stripe } = await import("stripe");
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-03-25.dahlia" });
+      event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    } catch (err: any) {
+      console.error("[Webhook] Signature verification failed:", err.message);
+      res.status(400).send(`Webhook Error: ${err.message}`);
+      return;
+    }
+    // Test event passthrough
+    if (event.id.startsWith("evt_test_")) {
+      console.log("[Webhook] Test event detected");
+      res.json({ verified: true });
+      return;
+    }
+    // Handle subscription events
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as import("stripe").Stripe.Checkout.Session;
+      const userId = parseInt(session.metadata?.user_id ?? "0");
+      if (userId) {
+        const { getDb } = await import("../db");
+        const { subscriptions } = await import("../../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        const db = await getDb();
+        if (db) {
+          const existing = await db.select().from(subscriptions).where(eq(subscriptions.userId, userId)).limit(1);
+          if (existing.length > 0) {
+            await db.update(subscriptions).set({ status: "active", stripeCustomerId: session.customer as string, stripeSubscriptionId: session.subscription as string }).where(eq(subscriptions.userId, userId));
+          } else {
+            await db.insert(subscriptions).values({ userId, status: "active", stripeCustomerId: session.customer as string, stripeSubscriptionId: session.subscription as string });
+          }
+          console.log(`[Webhook] Subscription activated for user ${userId}`);
+        }
+      }
+    }
+    res.json({ received: true });
+  });
+
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));

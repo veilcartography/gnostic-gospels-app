@@ -7,7 +7,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useOracle } from '@/hooks/useOracle';
+import { trpc } from '@/lib/trpc';
+import { toast } from 'sonner';
 import { Streamdown } from 'streamdown';
+
+const FREE_LIMIT = 3;
 
 const HERO_BG = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663251063494/TadG6nNb4cG9vCt5k7wNnj/gnostic_hero_bg-bmSiDxD6HFcp9oGKctTvpW.webp';
 const SOPHIA_IMG = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663251063494/TadG6nNb4cG9vCt5k7wNnj/gnostic_sophia-LJqwXjFqbbRN6FDZDXfZgy.webp';
@@ -26,8 +30,25 @@ export default function Home() {
   const { messages, isLoading, error, askOracle, initKnowledgeBase, clearMessages } = useOracle();
   const [input, setInput] = useState('');
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [freeCount, setFreeCount] = useState(() => parseInt(localStorage.getItem('oracle_free_count') ?? '0'));
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const { data: subStatus } = trpc.stripe.status.useQuery();
+  const createCheckout = trpc.stripe.createCheckout.useMutation();
+  const isSubscribed = subStatus?.isSubscribed ?? false;
+
+  const handleSubscribe = async () => {
+    try {
+      toast.info('Opening secure checkout...');
+      const result = await createCheckout.mutateAsync({ origin: window.location.origin });
+      if (result.url) window.open(result.url, '_blank');
+    } catch {
+      toast.error('Could not open checkout. Please try again.');
+    }
+  };
 
   useEffect(() => {
     // Silently load knowledge base — don't show error banner on startup
@@ -44,7 +65,23 @@ export default function Home() {
     const q = input;
     setInput('');
     setHasInteracted(true);
+
+    // Enforce free question limit for non-subscribers
+    if (!isSubscribed && freeCount >= FREE_LIMIT) {
+      setShowPaywall(true);
+      return;
+    }
+
+    const newCount = freeCount + 1;
+    setFreeCount(newCount);
+    localStorage.setItem('oracle_free_count', newCount.toString());
+
     await askOracle(q);
+
+    // Show paywall after last free question
+    if (!isSubscribed && newCount >= FREE_LIMIT) {
+      setTimeout(() => setShowPaywall(true), 1500);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -61,6 +98,32 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'oklch(0.10 0.015 60)' }}>
+
+      {/* ── TOP NAV ── */}
+      <nav className="flex items-center justify-between px-6 py-3" style={{ borderBottom: '1px solid oklch(0.18 0.02 60)', background: 'oklch(0.09 0.015 60 / 80%)' }}>
+        <div className="flex items-center gap-4">
+          {!isSubscribed && (
+            <span style={{ fontFamily: 'Courier Prime, monospace', fontSize: '0.65rem', color: freeCount >= FREE_LIMIT ? 'oklch(0.65 0.10 30)' : 'oklch(0.50 0.05 75)', letterSpacing: '0.05em' }}>
+              {Math.max(0, FREE_LIMIT - freeCount)} FREE {Math.max(0, FREE_LIMIT - freeCount) === 1 ? 'QUESTION' : 'QUESTIONS'} REMAINING
+            </span>
+          )}
+          {isSubscribed && (
+            <span style={{ fontFamily: 'Courier Prime, monospace', fontSize: '0.65rem', color: 'oklch(0.60 0.08 130)', letterSpacing: '0.05em' }}>✓ SUBSCRIBED</span>
+          )}
+        </div>
+        <div className="flex items-center gap-4">
+          <a href="/courses" style={{ fontFamily: 'Cinzel, serif', fontSize: '0.7rem', letterSpacing: '0.15em', color: 'oklch(0.60 0.06 75)', textDecoration: 'none', transition: 'color 0.2s' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'oklch(0.75 0.12 80)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'oklch(0.60 0.06 75)')}
+          >COURSES</a>
+          {!isSubscribed && (
+            <button onClick={handleSubscribe} style={{ fontFamily: 'Cinzel, serif', fontSize: '0.65rem', letterSpacing: '0.12em', background: 'oklch(0.75 0.12 80)', color: 'oklch(0.10 0.015 60)', border: 'none', padding: '0.35rem 0.9rem', borderRadius: '3px', cursor: 'pointer' }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'oklch(0.82 0.12 80)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'oklch(0.75 0.12 80)')}
+            >SUBSCRIBE</button>
+          )}
+        </div>
+      </nav>
 
       {/* ── HERO SECTION ── */}
       <header className="relative overflow-hidden" style={{ minHeight: '340px' }}>
@@ -340,11 +403,62 @@ export default function Home() {
         </div>
       </main>
 
+      {/* ── PAYWALL MODAL ── */}
+      {showPaywall && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'oklch(0.05 0.01 60 / 85%)' }} onClick={() => setShowPaywall(false)}>
+          <div className="max-w-md w-full p-8 rounded text-center" style={{ background: 'oklch(0.13 0.015 60)', border: '1px solid oklch(0.45 0.08 80 / 50%)' }} onClick={e => e.stopPropagation()}>
+            <span style={{ fontSize: '2rem', color: 'oklch(0.75 0.12 80)' }}>✦</span>
+            <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.3rem', color: 'oklch(0.85 0.10 80)', margin: '1rem 0 0.5rem' }}>You have reached the veil</h2>
+            <p style={{ fontFamily: 'EB Garamond, serif', fontStyle: 'italic', fontSize: '1rem', color: 'oklch(0.65 0.05 75)', marginBottom: '1.5rem', lineHeight: 1.7 }}>
+              You have used your 3 free questions. To continue seeking the hidden wisdom, subscribe for unlimited Oracle access and all 6 courses.
+            </p>
+            <button onClick={handleSubscribe} className="w-full py-3 rounded mb-3 transition-all" style={{ fontFamily: 'Cinzel, serif', fontSize: '0.8rem', letterSpacing: '0.15em', background: 'oklch(0.75 0.12 80)', color: 'oklch(0.10 0.015 60)', border: 'none', cursor: 'pointer' }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'oklch(0.82 0.12 80)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'oklch(0.75 0.12 80)')}
+            >UNLOCK ALL ACCESS — £5.99/MONTH</button>
+            <a href="/courses" className="block mb-3" style={{ fontFamily: 'Cinzel, serif', fontSize: '0.7rem', letterSpacing: '0.12em', color: 'oklch(0.60 0.06 75)', textDecoration: 'none' }}>VIEW COURSES →</a>
+            <button onClick={() => setShowPaywall(false)} style={{ fontFamily: 'Courier Prime, monospace', fontSize: '0.65rem', color: 'oklch(0.40 0.04 75)', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.05em' }}>CLOSE</button>
+          </div>
+        </div>
+      )}
+
+      {/* ── SHARE MODAL ── */}
+      {showShare && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'oklch(0.05 0.01 60 / 85%)' }} onClick={() => setShowShare(false)}>
+          <div className="max-w-md w-full p-8 rounded" style={{ background: 'oklch(0.13 0.015 60)', border: '1px solid oklch(0.35 0.06 75 / 40%)' }} onClick={e => e.stopPropagation()}>
+            <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.1rem', color: 'oklch(0.85 0.10 80)', marginBottom: '1rem' }}>Share the Oracle</h2>
+            <p style={{ fontFamily: 'Courier Prime, monospace', fontSize: '0.65rem', color: 'oklch(0.45 0.04 75)', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>COPY THIS FOR INSTAGRAM / YOUTUBE COMMUNITY</p>
+            <div className="p-4 rounded mb-4" style={{ background: 'oklch(0.10 0.015 60)', border: '1px solid oklch(0.22 0.02 60)', fontFamily: 'EB Garamond, serif', fontSize: '0.95rem', color: 'oklch(0.75 0.06 75)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>{`✦ Ask the Gnostic Gospels Oracle anything ✦
+
+What does the Gospel of Thomas say about the Kingdom? Who is Sophia? What is gnosis?
+
+This AI searches 352 passages across 12 ancient Nag Hammadi texts and gives you sourced answers from the actual scriptures.
+
+3 free questions — then £5.99/month for unlimited access + 6 in-depth courses.
+
+🔗 gnosticchat-tadg6nnb.manus.space
+
+#GnosticGospels #NagHammadi #Sophia #AncientWisdom #Gnosis #SacredTexts #VeilCartography`}</div>
+            <button onClick={() => { navigator.clipboard.writeText(`✦ Ask the Gnostic Gospels Oracle anything ✦\n\nWhat does the Gospel of Thomas say about the Kingdom? Who is Sophia? What is gnosis?\n\nThis AI searches 352 passages across 12 ancient Nag Hammadi texts and gives you sourced answers from the actual scriptures.\n\n3 free questions — then £5.99/month for unlimited access + 6 in-depth courses.\n\n🔗 gnosticchat-tadg6nnb.manus.space\n\n#GnosticGospels #NagHammadi #Sophia #AncientWisdom #Gnosis #SacredTexts #VeilCartography`); toast.success('Copied to clipboard!'); setShowShare(false); }} className="w-full py-2 rounded mb-3" style={{ fontFamily: 'Cinzel, serif', fontSize: '0.75rem', letterSpacing: '0.12em', background: 'oklch(0.75 0.12 80)', color: 'oklch(0.10 0.015 60)', border: 'none', cursor: 'pointer' }}>COPY TO CLIPBOARD</button>
+            <button onClick={() => setShowShare(false)} style={{ fontFamily: 'Courier Prime, monospace', fontSize: '0.65rem', color: 'oklch(0.40 0.04 75)', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.05em', display: 'block', margin: '0 auto' }}>CLOSE</button>
+          </div>
+        </div>
+      )}
+
       {/* ── FOOTER ── */}
       <footer className="py-6 px-8 text-center" style={{ borderTop: '1px solid oklch(0.20 0.02 60)' }}>
-        <p style={{ fontFamily: 'Courier Prime, monospace', fontSize: '0.65rem', color: 'oklch(0.35 0.04 75)', letterSpacing: '0.08em', marginBottom: '0.5rem' }}>
+        <p style={{ fontFamily: 'Courier Prime, monospace', fontSize: '0.65rem', color: 'oklch(0.35 0.04 75)', letterSpacing: '0.08em', marginBottom: '0.75rem' }}>
           TEXTS FROM THE NAG HAMMADI LIBRARY · DISCOVERED UPPER EGYPT 1945 · TRANSLATIONS VIA GNOSIS.ORG
         </p>
+        <div className="flex items-center justify-center gap-6 flex-wrap">
+          <button
+            onClick={() => setShowShare(true)}
+            style={{ fontFamily: 'Courier Prime, monospace', fontSize: '0.65rem', color: 'oklch(0.55 0.06 75)', letterSpacing: '0.08em', background: 'none', border: '1px solid oklch(0.30 0.04 75 / 40%)', padding: '0.3rem 0.8rem', borderRadius: '3px', cursor: 'pointer', transition: 'color 0.2s' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'oklch(0.75 0.12 80)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'oklch(0.55 0.06 75)')}
+          >
+            ⇑ SHARE THIS APP
+          </button>
         <a
           href="https://www.youtube.com/@veilcartography"
           target="_blank"
@@ -368,6 +482,7 @@ export default function Home() {
           </svg>
           @VEILCARTOGRAPHY
         </a>
+        </div>
       </footer>
     </div>
   );

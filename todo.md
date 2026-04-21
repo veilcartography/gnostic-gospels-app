@@ -9,7 +9,11 @@
 - [x] Add PWA manifest, icons, and service worker
 - [x] Generate TWA package for Google Play Store
 - [x] Write Play Store listing copy
-- [ ] Add free question limit with subscribe prompt (Stripe)
-- [ ] Add Courses page with structured learning paths
+- [x] Add free question limit with subscribe prompt (Stripe)
+- [x] Add Courses page with structured learning paths
 - [x] Fix load error banner on startup
 - [x] Add YouTube footer link to @veilcartography
+- [x] Add Stripe subscription integration
+- [x] Add 3 free question counter with subscribe modal/paywall
+- [x] Build Courses teaser page with structured learning paths
+- [x] Add social share button with pre-written YouTube/Instagram copy

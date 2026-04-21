@@ -25,11 +25,13 @@ const SUGGESTED_QUESTIONS = [
 export default function Home() {
   const { messages, isLoading, error, askOracle, initKnowledgeBase, clearMessages } = useOracle();
   const [input, setInput] = useState('');
+  const [hasInteracted, setHasInteracted] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    initKnowledgeBase();
+    // Silently load knowledge base — don't show error banner on startup
+    initKnowledgeBase().catch(() => {});
   }, [initKnowledgeBase]);
 
   useEffect(() => {
@@ -41,6 +43,7 @@ export default function Home() {
     if (!input.trim() || isLoading) return;
     const q = input;
     setInput('');
+    setHasInteracted(true);
     await askOracle(q);
   };
 
@@ -279,8 +282,8 @@ export default function Home() {
             )}
           </div>
 
-          {/* Error */}
-          {error && (
+          {/* Error — only show after user has interacted, not on initial load */}
+          {error && hasInteracted && (
             <div className="mb-4 px-4 py-3 rounded text-sm" style={{ background: 'oklch(0.20 0.05 20)', border: '1px solid oklch(0.40 0.10 20 / 50%)', color: 'oklch(0.80 0.08 30)', fontFamily: 'EB Garamond, serif' }}>
               {error}
             </div>
@@ -339,9 +342,32 @@ export default function Home() {
 
       {/* ── FOOTER ── */}
       <footer className="py-6 px-8 text-center" style={{ borderTop: '1px solid oklch(0.20 0.02 60)' }}>
-        <p style={{ fontFamily: 'Courier Prime, monospace', fontSize: '0.65rem', color: 'oklch(0.35 0.04 75)', letterSpacing: '0.08em' }}>
+        <p style={{ fontFamily: 'Courier Prime, monospace', fontSize: '0.65rem', color: 'oklch(0.35 0.04 75)', letterSpacing: '0.08em', marginBottom: '0.5rem' }}>
           TEXTS FROM THE NAG HAMMADI LIBRARY · DISCOVERED UPPER EGYPT 1945 · TRANSLATIONS VIA GNOSIS.ORG
         </p>
+        <a
+          href="https://www.youtube.com/@veilcartography"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            fontFamily: 'Courier Prime, monospace',
+            fontSize: '0.65rem',
+            color: 'oklch(0.55 0.06 75)',
+            letterSpacing: '0.08em',
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            transition: 'color 0.2s',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.color = 'oklch(0.75 0.12 80)')}
+          onMouseLeave={e => (e.currentTarget.style.color = 'oklch(0.55 0.06 75)')}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
+            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+          </svg>
+          @VEILCARTOGRAPHY
+        </a>
       </footer>
     </div>
   );

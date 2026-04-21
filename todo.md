@@ -11,3 +11,5 @@
 - [x] Write Play Store listing copy
 - [ ] Add free question limit with subscribe prompt (Stripe)
 - [ ] Add Courses page with structured learning paths
+- [x] Fix load error banner on startup
+- [x] Add YouTube footer link to @veilcartography

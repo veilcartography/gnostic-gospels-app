@@ -100,7 +100,7 @@ export default function Home() {
     <div className="min-h-screen flex flex-col" style={{ background: 'oklch(0.10 0.015 60)' }}>
 
       {/* ── TOP NAV ── */}
-      <nav className="flex items-center justify-between px-6 py-3" style={{ borderBottom: '1px solid oklch(0.18 0.02 60)', background: 'oklch(0.09 0.015 60 / 80%)' }}>
+      <nav className="flex items-center justify-between px-6 py-3" style={{ borderBottom: '1px solid oklch(0.18 0.02 60)', background: 'oklch(0.09 0.015 60 / 95%)', position: 'sticky', top: 0, zIndex: 50, backdropFilter: 'blur(8px)' }}>
         <div className="flex items-center gap-4">
           {!isSubscribed && (
             <span style={{ fontFamily: 'Courier Prime, monospace', fontSize: '0.65rem', color: freeCount >= FREE_LIMIT ? 'oklch(0.65 0.10 30)' : 'oklch(0.50 0.05 75)', letterSpacing: '0.05em' }}>

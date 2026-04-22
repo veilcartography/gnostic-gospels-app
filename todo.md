@@ -20,3 +20,4 @@
 - [x] Download course content from Google Drive
 - [x] Build real course lesson pages from Drive content
 - [x] Wire lesson pages to subscriber-only access
+- [x] Add Courses nav button to Oracle home page

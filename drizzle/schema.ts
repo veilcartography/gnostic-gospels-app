@@ -37,3 +37,34 @@ export const subscriptions = mysqlTable("subscriptions", {
 
 export type Subscription = typeof subscriptions.$inferSelect;
 export type InsertSubscription = typeof subscriptions.$inferInsert;
+
+export const courses = mysqlTable("courses", {
+  id: int("id").autoincrement().primaryKey(),
+  slug: varchar("slug", { length: 128 }).notNull().unique(),
+  title: varchar("title", { length: 256 }).notNull(),
+  subtitle: varchar("subtitle", { length: 256 }),
+  description: text("description"),
+  icon: varchar("icon", { length: 16 }).default("✦"),
+  color: varchar("color", { length: 64 }).default("oklch(0.75 0.12 80)"),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  published: mysqlEnum("published", ["yes", "no"]).default("yes").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Course = typeof courses.$inferSelect;
+export type InsertCourse = typeof courses.$inferInsert;
+
+export const lessons = mysqlTable("lessons", {
+  id: int("id").autoincrement().primaryKey(),
+  courseId: int("courseId").notNull(),
+  slug: varchar("slug", { length: 128 }).notNull(),
+  title: varchar("title", { length: 256 }).notNull(),
+  content: text("content").notNull(),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Lesson = typeof lessons.$inferSelect;
+export type InsertLesson = typeof lessons.$inferInsert;

@@ -4,6 +4,7 @@ import { invokeLLM } from "./_core/llm";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { stripeRouter } from "./stripeRouter";
+import { courseRouter } from "./courseRouter";
 import { z } from "zod";
 
 export const appRouter = router({
@@ -18,6 +19,7 @@ export const appRouter = router({
   }),
 
   stripe: stripeRouter,
+  courses: courseRouter,
 
   oracle: router({
     ask: publicProcedure

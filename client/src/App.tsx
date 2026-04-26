@@ -7,6 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Courses from "@/pages/Courses";
 import CourseLesson from "@/pages/CourseLesson";
+import AdminCourses from "@/pages/AdminCourses";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -14,7 +15,9 @@ function Router() {
     <Switch>
       <Route path={"/"} component={Home} />
       <Route path={"/courses"} component={Courses} />
+      <Route path={"/courses/:courseId/lessons"} component={CourseLesson} />
       <Route path={"/courses/:courseId/:lessonId"} component={CourseLesson} />
+      <Route path={"/admin/courses"} component={AdminCourses} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

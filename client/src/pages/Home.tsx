@@ -10,6 +10,8 @@ import { useOracle } from '@/hooks/useOracle';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import { Streamdown } from 'streamdown';
+import { useAuth } from '@/_core/hooks/useAuth';
+import { getLoginUrl } from '@/const';
 
 const FREE_LIMIT = 3;
 
@@ -36,9 +38,11 @@ export default function Home() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  const { isAuthenticated, user, logout } = useAuth();
   const { data: subStatus } = trpc.stripe.status.useQuery();
   const createCheckout = trpc.stripe.createCheckout.useMutation();
-  const isSubscribed = subStatus?.isSubscribed ?? false;
+  const isOwnerOrAdmin = user?.role === 'admin';
+  const isSubscribed = isOwnerOrAdmin || (subStatus?.isSubscribed ?? false);
 
   const handleSubscribe = async () => {
     try {
@@ -116,11 +120,23 @@ export default function Home() {
             onMouseEnter={e => (e.currentTarget.style.color = 'oklch(0.75 0.12 80)')}
             onMouseLeave={e => (e.currentTarget.style.color = 'oklch(0.60 0.06 75)')}
           >COURSES</a>
-          {!isSubscribed && (
+          {!isAuthenticated && (
+            <a href={getLoginUrl()} style={{ fontFamily: 'Cinzel, serif', fontSize: '0.65rem', letterSpacing: '0.12em', color: 'oklch(0.60 0.06 75)', textDecoration: 'none', border: '1px solid oklch(0.30 0.03 75)', padding: '0.35rem 0.9rem', borderRadius: '3px' }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'oklch(0.75 0.12 80)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'oklch(0.60 0.06 75)')}
+            >LOGIN</a>
+          )}
+          {isAuthenticated && !isSubscribed && (
             <button onClick={handleSubscribe} style={{ fontFamily: 'Cinzel, serif', fontSize: '0.65rem', letterSpacing: '0.12em', background: 'oklch(0.75 0.12 80)', color: 'oklch(0.10 0.015 60)', border: 'none', padding: '0.35rem 0.9rem', borderRadius: '3px', cursor: 'pointer' }}
               onMouseEnter={e => (e.currentTarget.style.background = 'oklch(0.82 0.12 80)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'oklch(0.75 0.12 80)')}
             >SUBSCRIBE</button>
+          )}
+          {isAuthenticated && (
+            <button onClick={() => logout()} style={{ fontFamily: 'Cinzel, serif', fontSize: '0.65rem', letterSpacing: '0.12em', color: 'oklch(0.45 0.04 75)', background: 'none', border: 'none', cursor: 'pointer', padding: '0.35rem 0' }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'oklch(0.65 0.06 75)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'oklch(0.45 0.04 75)')}
+            >LOGOUT</button>
           )}
         </div>
       </nav>

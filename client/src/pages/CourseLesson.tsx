@@ -18,8 +18,8 @@ export default function CourseLesson() {
   const { data: subStatus } = trpc.stripe.status.useQuery();
   const createCheckout = trpc.stripe.createCheckout.useMutation();
 
-  const isOwnerOrAdmin = user?.role === 'admin';
-  const isSubscribed = isOwnerOrAdmin || (subStatus?.isSubscribed ?? false);
+  // Courses are free to all — no paywall
+  const isSubscribed = true;
 
   const course = getCourseById(params.courseId);
   const lesson = getLessonById(params.courseId, params.lessonId);

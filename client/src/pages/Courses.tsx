@@ -64,8 +64,8 @@ export default function Courses() {
   const { data: subStatus } = trpc.stripe.status.useQuery();
   const createCheckout = trpc.stripe.createCheckout.useMutation();
 
-  const isOwnerOrAdmin = user?.role === 'admin';
-  const isSubscribed = isOwnerOrAdmin || (subStatus?.isSubscribed ?? false);
+  // Courses are free to all — no paywall
+  const isSubscribed = true;
 
   const handleSubscribe = async () => {
     if (!isAuthenticated) {

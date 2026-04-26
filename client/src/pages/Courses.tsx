@@ -59,12 +59,13 @@ const ALL_COURSES = [
 ];
 
 export default function Courses() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [, navigate] = useLocation();
   const { data: subStatus } = trpc.stripe.status.useQuery();
   const createCheckout = trpc.stripe.createCheckout.useMutation();
 
-  const isSubscribed = subStatus?.isSubscribed ?? false;
+  const isOwnerOrAdmin = user?.role === 'admin';
+  const isSubscribed = isOwnerOrAdmin || (subStatus?.isSubscribed ?? false);
 
   const handleSubscribe = async () => {
     if (!isAuthenticated) {

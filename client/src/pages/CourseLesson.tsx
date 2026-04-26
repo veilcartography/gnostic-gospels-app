@@ -14,11 +14,12 @@ import { toast } from "sonner";
 export default function CourseLesson() {
   const params = useParams<{ courseId: string; lessonId: string }>();
   const [, navigate] = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { data: subStatus } = trpc.stripe.status.useQuery();
   const createCheckout = trpc.stripe.createCheckout.useMutation();
 
-  const isSubscribed = subStatus?.isSubscribed ?? false;
+  const isOwnerOrAdmin = user?.role === 'admin';
+  const isSubscribed = isOwnerOrAdmin || (subStatus?.isSubscribed ?? false);
 
   const course = getCourseById(params.courseId);
   const lesson = getLessonById(params.courseId, params.lessonId);

@@ -121,7 +121,7 @@ export default function Home() {
             onMouseLeave={e => (e.currentTarget.style.color = 'oklch(0.60 0.06 75)')}
           >COURSES</a>
           {!isAuthenticated && (
-            <a href={getLoginUrl()} style={{ fontFamily: 'Cinzel, serif', fontSize: '0.65rem', letterSpacing: '0.12em', color: 'oklch(0.60 0.06 75)', textDecoration: 'none', border: '1px solid oklch(0.30 0.03 75)', padding: '0.35rem 0.9rem', borderRadius: '3px' }}
+            <a href="/api/oauth/login" style={{ fontFamily: 'Cinzel, serif', fontSize: '0.65rem', letterSpacing: '0.12em', color: 'oklch(0.60 0.06 75)', textDecoration: 'none', border: '1px solid oklch(0.30 0.03 75)', padding: '0.35rem 0.9rem', borderRadius: '3px' }}
               onMouseEnter={e => (e.currentTarget.style.color = 'oklch(0.75 0.12 80)')}
               onMouseLeave={e => (e.currentTarget.style.color = 'oklch(0.60 0.06 75)')}
             >LOGIN</a>

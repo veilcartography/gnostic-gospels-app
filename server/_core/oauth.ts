@@ -3,6 +3,7 @@ import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
+import { ENV } from "./env";
 
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
@@ -10,6 +11,25 @@ function getQueryParam(req: Request, key: string): string | undefined {
 }
 
 export function registerOAuthRoutes(app: Express) {
+  // Server-side login redirect — more reliable than frontend URL construction
+  app.get("/api/oauth/login", (req: Request, res: Response) => {
+    const oauthPortalUrl = (process.env.VITE_OAUTH_PORTAL_URL ?? "https://manus.im").replace(/\/+$/, "");
+    const appId = process.env.VITE_APP_ID ?? ENV.appId;
+    // Use the request origin to build the redirect URI
+    const origin = `${req.protocol}://${req.get("host")}`;
+    const redirectUri = `${origin}/api/oauth/callback`;
+    const state = Buffer.from(redirectUri).toString("base64");
+
+    const url = new URL(`${oauthPortalUrl}/app-auth`);
+    url.searchParams.set("appId", appId);
+    url.searchParams.set("redirectUri", redirectUri);
+    url.searchParams.set("state", state);
+    url.searchParams.set("type", "signIn");
+
+    console.log("[OAuth] Login redirect to:", url.toString());
+    res.redirect(302, url.toString());
+  });
+
   app.get("/api/oauth/callback", async (req: Request, res: Response) => {
     const code = getQueryParam(req, "code");
     const state = getQueryParam(req, "state");

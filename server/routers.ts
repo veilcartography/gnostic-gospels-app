@@ -6,6 +6,8 @@ import { publicProcedure, router } from "./_core/trpc";
 import { stripeRouter } from "./stripeRouter";
 import { courseRouter } from "./courseRouter";
 import { z } from "zod";
+import { getDb } from "./db";
+import { emailLeads } from "../drizzle/schema";
 
 export const appRouter = router({
   system: systemRouter,
@@ -20,6 +22,32 @@ export const appRouter = router({
 
   stripe: stripeRouter,
   courses: courseRouter,
+
+  leads: router({
+    capture: publicProcedure
+      .input(z.object({
+        name: z.string().min(1).max(128),
+        email: z.string().email().max(320),
+        source: z.string().max(64).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        try {
+          await db!.insert(emailLeads).values({
+            name: input.name.trim(),
+            email: input.email.trim().toLowerCase(),
+            source: input.source ?? "oracle",
+          });
+          return { success: true, message: "The Oracle has received your name." };
+        } catch (err: any) {
+          // Duplicate email — treat as success so we don't reveal who is already subscribed
+          if (err?.code === 'ER_DUP_ENTRY') {
+            return { success: true, message: "You are already known to the Oracle." };
+          }
+          throw err;
+        }
+      }),
+  }),
 
   oracle: router({
     ask: publicProcedure

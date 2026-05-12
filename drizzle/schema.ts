@@ -68,3 +68,14 @@ export const lessons = mysqlTable("lessons", {
 
 export type Lesson = typeof lessons.$inferSelect;
 export type InsertLesson = typeof lessons.$inferInsert;
+
+export const emailLeads = mysqlTable("email_leads", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  source: varchar("source", { length: 64 }).default("oracle").notNull(), // where they signed up
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type EmailLead = typeof emailLeads.$inferSelect;
+export type InsertEmailLead = typeof emailLeads.$inferInsert;

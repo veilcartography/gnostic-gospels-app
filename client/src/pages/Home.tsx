@@ -11,9 +11,9 @@ import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import { Streamdown } from 'streamdown';
 import { useAuth } from '@/_core/hooks/useAuth';
-import { getLoginUrl } from '@/const';
 
 const FREE_LIMIT = 3;
+const EXTENDED_LIMIT = 6; // questions allowed after email capture
 
 const HERO_BG = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663251063494/TadG6nNb4cG9vCt5k7wNnj/gnostic_hero_bg-bmSiDxD6HFcp9oGKctTvpW.webp';
 const SOPHIA_IMG = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663251063494/TadG6nNb4cG9vCt5k7wNnj/gnostic_sophia-LJqwXjFqbbRN6FDZDXfZgy.webp';
@@ -35,12 +35,18 @@ export default function Home() {
   const [freeCount, setFreeCount] = useState(() => parseInt(localStorage.getItem('oracle_free_count') ?? '0'));
   const [showPaywall, setShowPaywall] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [showEmailCapture, setShowEmailCapture] = useState(false);
+  const [emailCaptured, setEmailCaptured] = useState(() => localStorage.getItem('oracle_email_captured') === '1');
+  const [leadName, setLeadName] = useState('');
+  const [leadEmail, setLeadEmail] = useState('');
+  const [leadSubmitting, setLeadSubmitting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const { isAuthenticated, user, logout } = useAuth();
   const { data: subStatus } = trpc.stripe.status.useQuery();
   const createCheckout = trpc.stripe.createCheckout.useMutation();
+  const captureEmail = trpc.leads.capture.useMutation();
   const isOwnerOrAdmin = user?.role === 'admin';
   const isSubscribed = isOwnerOrAdmin || (subStatus?.isSubscribed ?? false);
 
@@ -71,9 +77,16 @@ export default function Home() {
     setHasInteracted(true);
 
     // Enforce free question limit for non-subscribers
-    if (!isSubscribed && freeCount >= FREE_LIMIT) {
-      setShowPaywall(true);
-      return;
+    if (!isSubscribed) {
+      const limit = emailCaptured ? EXTENDED_LIMIT : FREE_LIMIT;
+      if (freeCount >= limit) {
+        if (!emailCaptured) {
+          setShowEmailCapture(true);
+        } else {
+          setShowPaywall(true);
+        }
+        return;
+      }
     }
 
     const newCount = freeCount + 1;
@@ -82,9 +95,13 @@ export default function Home() {
 
     await askOracle(q);
 
-    // Show paywall after last free question
+    // After 3rd question: show email capture if not yet captured, else paywall
     if (!isSubscribed && newCount >= FREE_LIMIT) {
-      setTimeout(() => setShowPaywall(true), 1500);
+      if (!emailCaptured) {
+        setTimeout(() => setShowEmailCapture(true), 1800);
+      } else if (newCount >= EXTENDED_LIMIT) {
+        setTimeout(() => setShowPaywall(true), 1500);
+      }
     }
   };
 
@@ -163,6 +180,10 @@ export default function Home() {
           <h1 style={{ fontFamily: 'Cinzel, serif', fontSize: 'clamp(2rem, 6vw, 3.5rem)', fontWeight: 700, color: 'oklch(0.85 0.10 80)', lineHeight: 1.15, marginBottom: '1rem', textShadow: '0 2px 20px oklch(0.75 0.12 80 / 30%)' }}>
             The Gnostic Gospels Oracle
           </h1>
+
+          <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '0.7rem', letterSpacing: '0.2em', color: 'oklch(0.55 0.06 75)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+            Gnostic Gospels · Nag Hammadi Library · Sophia · Gnosis · Sacred Texts
+          </h2>
 
           <p style={{ fontFamily: 'EB Garamond, serif', fontSize: 'clamp(1rem, 2.5vw, 1.25rem)', fontStyle: 'italic', color: 'oklch(0.72 0.06 75)', maxWidth: '560px', lineHeight: 1.7 }}>
             Ask of the hidden wisdom. Seek within the ancient codices of Nag Hammadi.
@@ -419,14 +440,67 @@ export default function Home() {
         </div>
       </main>
 
-      {/* ── PAYWALL MODAL ── */}
+      {/* ── EMAIL CAPTURE MODAL — shown after 3rd question ── */}
+      {showEmailCapture && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'oklch(0.05 0.01 60 / 88%)' }} onClick={() => setShowEmailCapture(false)}>
+          <div className="max-w-md w-full p-8 rounded" style={{ background: 'oklch(0.13 0.015 60)', border: '1px solid oklch(0.45 0.08 80 / 50%)' }} onClick={e => e.stopPropagation()}>
+            <div className="text-center mb-6">
+              <span style={{ fontSize: '2rem', color: 'oklch(0.75 0.12 80)' }}>✦</span>
+              <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.25rem', color: 'oklch(0.85 0.10 80)', margin: '0.75rem 0 0.5rem' }}>The Oracle Recognises Your Seeking</h2>
+              <p style={{ fontFamily: 'EB Garamond, serif', fontStyle: 'italic', fontSize: '1rem', color: 'oklch(0.70 0.05 75)', lineHeight: 1.8 }}>
+                You have asked three questions of the hidden wisdom. Share your name and I shall continue the teaching — and send you deeper gnosis as it is revealed.
+              </p>
+            </div>
+            <form onSubmit={async e => {
+              e.preventDefault();
+              if (!leadName.trim() || !leadEmail.trim()) return;
+              setLeadSubmitting(true);
+              try {
+                await captureEmail.mutateAsync({ name: leadName, email: leadEmail, source: 'oracle' });
+                localStorage.setItem('oracle_email_captured', '1');
+                setEmailCaptured(true);
+                setShowEmailCapture(false);
+                toast.success('The Oracle receives you. Three more questions await.');
+              } catch {
+                toast.error('Something went wrong. Please try again.');
+              } finally {
+                setLeadSubmitting(false);
+              }
+            }} className="flex flex-col gap-3">
+              <input
+                type="text"
+                placeholder="Your name"
+                value={leadName}
+                onChange={e => setLeadName(e.target.value)}
+                required
+                style={{ fontFamily: 'EB Garamond, serif', fontSize: '1rem', background: 'oklch(0.10 0.015 60)', border: '1px solid oklch(0.30 0.04 75 / 50%)', borderRadius: '4px', padding: '0.6rem 1rem', color: 'oklch(0.88 0.05 80)', outline: 'none', width: '100%' }}
+              />
+              <input
+                type="email"
+                placeholder="Your email address"
+                value={leadEmail}
+                onChange={e => setLeadEmail(e.target.value)}
+                required
+                style={{ fontFamily: 'EB Garamond, serif', fontSize: '1rem', background: 'oklch(0.10 0.015 60)', border: '1px solid oklch(0.30 0.04 75 / 50%)', borderRadius: '4px', padding: '0.6rem 1rem', color: 'oklch(0.88 0.05 80)', outline: 'none', width: '100%' }}
+              />
+              <button type="submit" disabled={leadSubmitting} className="w-full py-3 rounded transition-all" style={{ fontFamily: 'Cinzel, serif', fontSize: '0.8rem', letterSpacing: '0.15em', background: 'oklch(0.75 0.12 80)', color: 'oklch(0.10 0.015 60)', border: 'none', cursor: leadSubmitting ? 'wait' : 'pointer', marginTop: '0.5rem' }}>
+                {leadSubmitting ? 'RECEIVING...' : 'CONTINUE THE TEACHING'}
+              </button>
+              <p style={{ fontFamily: 'Courier Prime, monospace', fontSize: '0.6rem', color: 'oklch(0.38 0.03 75)', textAlign: 'center', letterSpacing: '0.05em' }}>No spam. Unsubscribe at any time.</p>
+            </form>
+            <button onClick={() => setShowEmailCapture(false)} style={{ fontFamily: 'Courier Prime, monospace', fontSize: '0.6rem', color: 'oklch(0.35 0.03 75)', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.05em', display: 'block', margin: '1rem auto 0' }}>SKIP FOR NOW</button>
+          </div>
+        </div>
+      )}
+
+      {/* ── PAYWALL MODAL — shown after 6 questions (3 free + 3 bonus) ── */}
       {showPaywall && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'oklch(0.05 0.01 60 / 85%)' }} onClick={() => setShowPaywall(false)}>
           <div className="max-w-md w-full p-8 rounded text-center" style={{ background: 'oklch(0.13 0.015 60)', border: '1px solid oklch(0.45 0.08 80 / 50%)' }} onClick={e => e.stopPropagation()}>
             <span style={{ fontSize: '2rem', color: 'oklch(0.75 0.12 80)' }}>✦</span>
             <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.3rem', color: 'oklch(0.85 0.10 80)', margin: '1rem 0 0.5rem' }}>You have reached the veil</h2>
             <p style={{ fontFamily: 'EB Garamond, serif', fontStyle: 'italic', fontSize: '1rem', color: 'oklch(0.65 0.05 75)', marginBottom: '1.5rem', lineHeight: 1.7 }}>
-              You have used your 3 free questions. To continue seeking the hidden wisdom, subscribe for unlimited Oracle access and all 6 courses.
+              You have used your free questions. To continue seeking the hidden wisdom, subscribe for unlimited Oracle access and all courses.
             </p>
             <button onClick={handleSubscribe} className="w-full py-3 rounded mb-3 transition-all" style={{ fontFamily: 'Cinzel, serif', fontSize: '0.8rem', letterSpacing: '0.15em', background: 'oklch(0.75 0.12 80)', color: 'oklch(0.10 0.015 60)', border: 'none', cursor: 'pointer' }}
               onMouseEnter={e => (e.currentTarget.style.background = 'oklch(0.82 0.12 80)')}

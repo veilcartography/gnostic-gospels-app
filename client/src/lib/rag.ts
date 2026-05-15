@@ -13,11 +13,26 @@ export interface KnowledgeChunk {
 
 let knowledgeBase: KnowledgeChunk[] | null = null;
 
+// Raw passage shape from the Wikipedia scrape
+interface WikiPassage {
+  source: string;
+  section: string;
+  text: string;
+  url: string;
+}
+
 export async function loadKnowledgeBase(): Promise<KnowledgeChunk[]> {
   if (knowledgeBase) return knowledgeBase;
-  const res = await fetch('/manus-storage/gnostic_knowledge_6a31ea14.json');
+  const res = await fetch('/manus-storage/nag_hammadi_wiki_knowledge_05d4efe5.json');
   if (!res.ok) throw new Error('Failed to load knowledge base');
-  knowledgeBase = await res.json();
+  const raw: WikiPassage[] = await res.json();
+  // Normalise into KnowledgeChunk shape
+  knowledgeBase = raw.map((p, i) => ({
+    id: `wiki_${i}`,
+    title: p.source,
+    source: `${p.source} — ${p.section}`,
+    text: p.text,
+  }));
   return knowledgeBase!;
 }
 

@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import Courses from "@/pages/Courses";
 import CourseLesson from "@/pages/CourseLesson";
 import AdminCourses from "@/pages/AdminCourses";
+import AdminLeads from "@/pages/AdminLeads";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -18,6 +19,7 @@ function Router() {
       <Route path={"/courses/:courseId/lessons"} component={CourseLesson} />
       <Route path={"/courses/:courseId/:lessonId"} component={CourseLesson} />
       <Route path={"/admin/courses"} component={AdminCourses} />
+      <Route path={"/admin/leads"} component={AdminLeads} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

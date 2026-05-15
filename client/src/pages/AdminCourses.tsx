@@ -72,6 +72,7 @@ export default function AdminCourses() {
         <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
           <button onClick={() => navigate("/")} style={{ ...btnSecondary, padding: "0.3rem 0.8rem", fontSize: "0.65rem" }}>← ORACLE</button>
           <span style={{ fontFamily: S.cinzel, fontSize: "0.85rem", letterSpacing: "0.15em", color: S.gold }}>COURSE ADMIN</span>
+          <button onClick={() => navigate("/admin/leads")} style={{ ...btnSecondary, padding: "0.3rem 0.8rem", fontSize: "0.65rem" }}>EMAIL LEADS</button>
         </div>
         {(allCourses?.length ?? 0) === 0 && (
           <button onClick={() => seed.mutate()} disabled={seed.isPending} style={btnPrimary}>

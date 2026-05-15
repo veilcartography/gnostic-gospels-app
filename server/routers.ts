@@ -2,12 +2,13 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { invokeLLM } from "./_core/llm";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { adminProcedure, publicProcedure, router } from "./_core/trpc";
 import { stripeRouter } from "./stripeRouter";
 import { courseRouter } from "./courseRouter";
 import { z } from "zod";
 import { getDb } from "./db";
 import { emailLeads } from "../drizzle/schema";
+import { eq, desc } from "drizzle-orm";
 
 export const appRouter = router({
   system: systemRouter,
@@ -24,6 +25,23 @@ export const appRouter = router({
   courses: courseRouter,
 
   leads: router({
+    // Admin: list all leads
+    list: adminProcedure
+      .query(async () => {
+        const db = await getDb();
+        const rows = await db!.select().from(emailLeads).orderBy(desc(emailLeads.createdAt));
+        return rows;
+      }),
+
+    // Admin: delete a lead by id
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        await db!.delete(emailLeads).where(eq(emailLeads.id, input.id));
+        return { success: true };
+      }),
+
     capture: publicProcedure
       .input(z.object({
         name: z.string().min(1).max(128),

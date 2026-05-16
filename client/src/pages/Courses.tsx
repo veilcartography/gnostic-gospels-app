@@ -78,6 +78,23 @@ export default function Courses() {
         </p>
       </div>
 
+      {/* Module 1 Free Banner */}
+      <div className="max-w-5xl mx-auto w-full px-6 mb-2">
+        <a href="/module-1-what-is-gnosis" style={{ display: 'block', background: 'oklch(0.14 0.02 70)', border: '1px solid oklch(0.75 0.12 80 / 40%)', borderRadius: '6px', padding: '1rem 1.5rem', textDecoration: 'none', transition: 'border-color 0.2s' }}
+          onMouseEnter={e => (e.currentTarget.style.borderColor = 'oklch(0.75 0.12 80)')}
+          onMouseLeave={e => (e.currentTarget.style.borderColor = 'oklch(0.75 0.12 80 / 40%)')}
+        >
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <p style={{ fontFamily: 'Courier Prime, monospace', fontSize: '0.6rem', letterSpacing: '0.2em', color: 'oklch(0.75 0.12 80)', marginBottom: '0.3rem' }}>✦ FREE MODULE — START HERE</p>
+              <p style={{ fontFamily: 'Cinzel, serif', fontSize: '1rem', color: 'oklch(0.85 0.10 80)' }}>Module 1: What Is Gnosis?</p>
+              <p style={{ fontFamily: 'EB Garamond, serif', fontStyle: 'italic', fontSize: '0.9rem', color: 'oklch(0.60 0.05 75)', marginTop: '0.2rem' }}>The Gnostic Genesis — Foundations of the Divine Spark</p>
+            </div>
+            <span style={{ fontFamily: 'Cinzel, serif', fontSize: '0.7rem', letterSpacing: '0.12em', color: 'oklch(0.75 0.12 80)', whiteSpace: 'nowrap' }}>READ FREE →</span>
+          </div>
+        </a>
+      </div>
+
       {/* Course grid */}
       <main className="flex-1 max-w-5xl mx-auto w-full px-6 pb-16">
         {isLoading && (

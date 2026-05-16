@@ -50,20 +50,63 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         const db = await getDb();
+        const isNew = { value: false };
         try {
           await db!.insert(emailLeads).values({
             name: input.name.trim(),
             email: input.email.trim().toLowerCase(),
             source: input.source ?? "oracle",
           });
-          return { success: true, message: "The Oracle has received your name." };
+          isNew.value = true;
         } catch (err: any) {
           // Duplicate email — treat as success so we don't reveal who is already subscribed
-          if (err?.code === 'ER_DUP_ENTRY') {
-            return { success: true, message: "You are already known to the Oracle." };
-          }
-          throw err;
+          if (err?.code !== 'ER_DUP_ENTRY') throw err;
         }
+
+        // Send welcome email with Module 1 link (only for new sign-ups)
+        if (isNew.value) {
+          try {
+            const { invokeLLM: _unused, ...rest } = { invokeLLM: null }; void rest;
+            const baseUrl = process.env.VITE_APP_ID
+              ? `https://gnosticchat-tadg6nnb.manus.space`
+              : 'http://localhost:3000';
+            const module1Url = `${baseUrl}/module-1-what-is-gnosis`;
+            const coursesUrl = `${baseUrl}/courses`;
+
+            const emailHtml = `<div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #0d0b08; color: #d4b896; padding: 40px 32px;">
+  <p style="font-family: 'Courier New', monospace; font-size: 11px; letter-spacing: 3px; color: #8a7a5a; text-transform: uppercase; margin-bottom: 24px;">The Gnostic Gospels Oracle</p>
+  <h1 style="font-family: Georgia, serif; font-size: 22px; color: #c9a84c; margin-bottom: 8px; line-height: 1.4;">Start here: What Is Gnosis? (free)</h1>
+  <p style="font-size: 16px; line-height: 1.8; margin-bottom: 20px;">Dear ${input.name.trim()},</p>
+  <p style="font-size: 16px; line-height: 1.8; margin-bottom: 20px;">Here is your free Module 1: <strong>What Is Gnosis?</strong> — the foundation for everything you will explore in the Oracle.</p>
+  <p style="margin-bottom: 28px;">
+    <a href="${module1Url}" style="display: inline-block; background: #c9a84c; color: #0d0b08; font-family: 'Courier New', monospace; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; padding: 14px 28px; text-decoration: none; border-radius: 3px;">Read Module 1 Now →</a>
+  </p>
+  <p style="font-size: 15px; line-height: 1.8; margin-bottom: 20px;">This is the foundation for everything you will explore in the Oracle. It covers the Pleroma, Sophia's descent, the Archons, and the two foundational daily practices for awakening your divine spark.</p>
+  <p style="font-size: 15px; line-height: 1.8; margin-bottom: 28px;">Ready to go deeper? <a href="${coursesUrl}" style="color: #c9a84c;">Choose your next module →</a></p>
+  <hr style="border: none; border-top: 1px solid #2a2318; margin: 28px 0;" />
+  <p style="font-family: 'Courier New', monospace; font-size: 10px; color: #4a3f2a; letter-spacing: 1px;">The Gnostic Gospels Oracle · You are receiving this because you asked of the hidden wisdom. <a href="#" style="color: #4a3f2a;">Unsubscribe</a></p>
+</div>`;
+
+            // Use the Forge notification API to send the welcome email
+            const forgeBaseUrl = (process.env.BUILT_IN_FORGE_API_URL || '').replace(/\/+$/, '');
+            const forgeKey = process.env.BUILT_IN_FORGE_API_KEY;
+            if (forgeBaseUrl && forgeKey) {
+              await fetch(`${forgeBaseUrl}/v1/notification/email`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${forgeKey}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  to: input.email.trim().toLowerCase(),
+                  subject: 'Start here: What Is Gnosis? (free) + your Oracle is unlocked',
+                  html: emailHtml,
+                }),
+              }).catch(() => {}); // Non-blocking — don't fail the sign-up if email fails
+            }
+          } catch {
+            // Email failure is non-blocking
+          }
+        }
+
+        return { success: true, message: isNew.value ? "The Oracle has received your name." : "You are already known to the Oracle." };
       }),
   }),
 

@@ -446,9 +446,9 @@ export default function Home() {
           <div className="max-w-md w-full p-8 rounded" style={{ background: 'oklch(0.13 0.015 60)', border: '1px solid oklch(0.45 0.08 80 / 50%)' }} onClick={e => e.stopPropagation()}>
             <div className="text-center mb-6">
               <span style={{ fontSize: '2rem', color: 'oklch(0.75 0.12 80)' }}>✦</span>
-              <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.25rem', color: 'oklch(0.85 0.10 80)', margin: '0.75rem 0 0.5rem' }}>The Oracle Recognises Your Seeking</h2>
+              <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.1rem', color: 'oklch(0.85 0.10 80)', margin: '0.75rem 0 0.5rem', lineHeight: 1.4 }}>Unlock Unlimited Readings + Receive Module 1 Free: What Is Gnosis?</h2>
               <p style={{ fontFamily: 'EB Garamond, serif', fontStyle: 'italic', fontSize: '1rem', color: 'oklch(0.70 0.05 75)', lineHeight: 1.8 }}>
-                You have asked three questions of the hidden wisdom. Share your name and I shall continue the teaching — and send you deeper gnosis as it is revealed.
+                Enter your email to continue. We'll send your free starter module instantly.
               </p>
             </div>
             <form onSubmit={async e => {
@@ -460,7 +460,7 @@ export default function Home() {
                 localStorage.setItem('oracle_email_captured', '1');
                 setEmailCaptured(true);
                 setShowEmailCapture(false);
-                toast.success('The Oracle receives you. Three more questions await.');
+                toast.success('Module 1 is on its way. Three more questions await.');
               } catch {
                 toast.error('Something went wrong. Please try again.');
               } finally {
@@ -484,7 +484,7 @@ export default function Home() {
                 style={{ fontFamily: 'EB Garamond, serif', fontSize: '1rem', background: 'oklch(0.10 0.015 60)', border: '1px solid oklch(0.30 0.04 75 / 50%)', borderRadius: '4px', padding: '0.6rem 1rem', color: 'oklch(0.88 0.05 80)', outline: 'none', width: '100%' }}
               />
               <button type="submit" disabled={leadSubmitting} className="w-full py-3 rounded transition-all" style={{ fontFamily: 'Cinzel, serif', fontSize: '0.8rem', letterSpacing: '0.15em', background: 'oklch(0.75 0.12 80)', color: 'oklch(0.10 0.015 60)', border: 'none', cursor: leadSubmitting ? 'wait' : 'pointer', marginTop: '0.5rem' }}>
-                {leadSubmitting ? 'RECEIVING...' : 'CONTINUE THE TEACHING'}
+                {leadSubmitting ? 'RECEIVING...' : 'UNLOCK THE ORACLE + GET MODULE 1 FREE'}
               </button>
               <p style={{ fontFamily: 'Courier Prime, monospace', fontSize: '0.6rem', color: 'oklch(0.38 0.03 75)', textAlign: 'center', letterSpacing: '0.05em' }}>No spam. Unsubscribe at any time.</p>
             </form>

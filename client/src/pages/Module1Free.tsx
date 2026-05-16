@@ -4,14 +4,36 @@
  * Content sourced directly from Tee's lesson plan and training manuals.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'wouter';
+import { trpc } from '@/lib/trpc';
+import { toast } from 'sonner';
 
 const HERO_BG = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663251063494/TadG6nNb4cG9vCt5k7wNnj/gnostic_hero_bg-bmSiDxD6HFcp9oGKctTvpW.webp';
+const PDF_URL = '/manus-storage/module1_what_is_gnosis_5f04dc97.pdf';
 
 export default function Module1Free() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const captureLead = trpc.leads.capture.useMutation({
+    onSuccess: () => {
+      setSubmitted(true);
+      toast.success('Your PDF is on its way — check your inbox.');
+    },
+    onError: () => {
+      toast.error('Something went wrong. Please try again.');
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !email.trim()) return;
+    captureLead.mutate({ name: name.trim(), email: email.trim(), source: 'module1_page' });
+  };
+
   useEffect(() => {
-    document.title = 'Module 1: What Is Gnosis? — The Gnostic Gospels Oracle';
+    document.title = 'Module 1: What Is Gnosis? — Free — The Gnostic Gospels Oracle';
     window.scrollTo(0, 0);
   }, []);
 
@@ -111,8 +133,72 @@ export default function Module1Free() {
           </div>
         </section>
 
-        {/* PART 2: PRACTICE */}
-        <section>
+        {/* EMAIL GATE — shown before Part 2 */}
+        {!submitted ? (
+          <section className="relative">
+            {/* Fade overlay over the teaser */}
+            <div className="pointer-events-none select-none opacity-30" style={{ fontFamily: 'EB Garamond, serif', fontSize: '1.05rem', color: 'oklch(0.80 0.04 75)', lineHeight: 1.9 }}>
+              <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.1rem', color: 'oklch(0.75 0.12 80)', letterSpacing: '0.1em', marginBottom: '1rem', borderBottom: '1px solid oklch(0.25 0.04 75 / 40%)', paddingBottom: '0.5rem' }}>PART 2 — PRACTICAL: AWAKENING THE SPARK</h2>
+              <p>Two foundational daily practices — the Heart-Centre Invocation and the Thought Observation drill — form the core of your Gnostic inner work. Plus a full review quiz to test your understanding...</p>
+            </div>
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 0%, oklch(0.10 0.015 60) 60%)' }} />
+
+            {/* Email form */}
+            <div className="relative mt-6 p-8 rounded" style={{ background: 'oklch(0.13 0.015 60)', border: '1px solid oklch(0.30 0.06 75 / 40%)' }}>
+              <div className="text-center mb-6">
+                <span style={{ fontSize: '1.5rem', color: 'oklch(0.75 0.12 80)' }}>✦</span>
+                <h3 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.1rem', color: 'oklch(0.82 0.10 80)', margin: '0.75rem 0 0.5rem' }}>Receive the Full Module Free</h3>
+                <p style={{ fontFamily: 'EB Garamond, serif', fontSize: '0.95rem', color: 'oklch(0.65 0.05 75)', fontStyle: 'italic' }}>
+                  Enter your details and we will send the complete Module 1 PDF to your inbox — including both daily practice drills, the full review quiz, and your next steps.
+                </p>
+              </div>
+              <form onSubmit={handleSubmit} className="flex flex-col gap-3 max-w-md mx-auto">
+                <input
+                  type="text"
+                  placeholder="Your name"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  required
+                  style={{ background: 'oklch(0.10 0.015 60)', border: '1px solid oklch(0.30 0.04 75 / 50%)', borderRadius: '3px', padding: '0.75rem 1rem', color: 'oklch(0.88 0.05 80)', fontFamily: 'EB Garamond, serif', fontSize: '1rem', outline: 'none' }}
+                />
+                <input
+                  type="email"
+                  placeholder="Your email address"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                  style={{ background: 'oklch(0.10 0.015 60)', border: '1px solid oklch(0.30 0.04 75 / 50%)', borderRadius: '3px', padding: '0.75rem 1rem', color: 'oklch(0.88 0.05 80)', fontFamily: 'EB Garamond, serif', fontSize: '1rem', outline: 'none' }}
+                />
+                <button
+                  type="submit"
+                  disabled={captureLead.isPending}
+                  style={{ fontFamily: 'Cinzel, serif', fontSize: '0.75rem', letterSpacing: '0.15em', background: 'oklch(0.75 0.12 80)', color: 'oklch(0.10 0.015 60)', border: 'none', padding: '0.85rem 1.75rem', borderRadius: '3px', cursor: 'pointer', opacity: captureLead.isPending ? 0.6 : 1 }}
+                >
+                  {captureLead.isPending ? 'SENDING...' : 'SEND ME MODULE 1 FREE →'}
+                </button>
+              </form>
+            </div>
+          </section>
+        ) : (
+          <section className="p-8 rounded text-center" style={{ background: 'oklch(0.13 0.015 60)', border: '1px solid oklch(0.30 0.06 75 / 40%)' }}>
+            <span style={{ fontSize: '2rem', color: 'oklch(0.75 0.12 80)' }}>✦</span>
+            <h3 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.1rem', color: 'oklch(0.82 0.10 80)', margin: '0.75rem 0 0.5rem' }}>The Teaching Is Sent</h3>
+            <p style={{ fontFamily: 'EB Garamond, serif', fontSize: '0.95rem', color: 'oklch(0.65 0.05 75)', fontStyle: 'italic', marginBottom: '1rem' }}>
+              Check your inbox for the full Module 1 PDF. If you do not see it within a few minutes, check your spam folder.
+            </p>
+            <a
+              href={PDF_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontFamily: 'Cinzel, serif', fontSize: '0.75rem', letterSpacing: '0.1em', color: 'oklch(0.75 0.12 80)', textDecoration: 'underline' }}
+            >
+              Download PDF directly →
+            </a>
+          </section>
+        )}
+
+        {/* PART 2: PRACTICE — only shown after email submitted */}
+        {submitted && <section id="part2">
           <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.1rem', color: 'oklch(0.75 0.12 80)', letterSpacing: '0.1em', marginBottom: '1rem', borderBottom: '1px solid oklch(0.25 0.04 75 / 40%)', paddingBottom: '0.5rem' }}>
             PART 2 — PRACTICAL: AWAKENING THE SPARK
           </h2>
@@ -163,10 +249,9 @@ export default function Module1Free() {
               </div>
             </div>
           </div>
-        </section>
+        </section>}
 
-        {/* QUIZ */}
-        <section>
+        {submitted && <section>
           <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.1rem', color: 'oklch(0.75 0.12 80)', letterSpacing: '0.1em', marginBottom: '1rem', borderBottom: '1px solid oklch(0.25 0.04 75 / 40%)', paddingBottom: '0.5rem' }}>
             MODULE 1 REVIEW — TEST YOURSELF
           </h2>
@@ -189,7 +274,7 @@ export default function Module1Free() {
               </details>
             ))}
           </div>
-        </section>
+        </section>}
 
         {/* CTA */}
         <section className="text-center py-8" style={{ borderTop: '1px solid oklch(0.20 0.03 75 / 40%)' }}>

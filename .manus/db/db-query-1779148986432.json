@@ -1,0 +1,9 @@
+{
+  "query": "DELETE FROM lessons; DELETE FROM courses;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2RYTTnfWeL25ZBq.e13dd6917398 --database TadG6nNb4cG9vCt5k7wNnj --execute DELETE FROM lessons; DELETE FROM courses;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2698
+}
